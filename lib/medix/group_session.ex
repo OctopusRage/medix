@@ -6,7 +6,7 @@ defmodule Medix.GroupSession do
   import Ecto.Query, warn: false
   alias Medix.Repo
 
-  alias Medix.GroupSession.Session
+  alias Medix.GroupSession.{Session, Queue}
 
   @doc """
   Returns the list of sessions.
@@ -104,5 +104,9 @@ defmodule Medix.GroupSession do
   """
   def change_session(%Session{} = session, attrs \\ %{}) do
     Session.changeset(session, attrs)
+  end
+
+  def show_queues(session_id) do
+    Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
   end
 end

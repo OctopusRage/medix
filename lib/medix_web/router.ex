@@ -37,7 +37,6 @@ defmodule MedixWeb.Router do
     live "/sessions/:group_id/edit/:id", SessionLive.Index, :edit
 
     live "/sessions/:group_id/show/:id", SessionLive.Show, :show
-    # live "/sessions/:id/show/edit", SessionLive.Show, :edit
 
 
 

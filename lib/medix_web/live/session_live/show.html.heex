@@ -11,6 +11,25 @@
 <.list>
   <:item title="Name"><%= @session.name %></:item>
 </.list>
+<div id="item">My Item</div>
+
+<button phx-click={JS.hide(to: "#item")}>
+  hide!
+</button>
+
+<button phx-click={JS.hide(to: "#item", transition: "fade-out-scale")}>
+  hide fancy!
+</button>
+
+  <.table
+    id="queues"
+    rows={@queues}
+  >
+    <:col :let={queue} label="Number"><%= queue.number %></:col>
+    <:col :let={queue} label="Name"><%= queue.name %></:col>
+
+
+  </.table>
 
 <.back navigate={~p"/sessions/list/#{@group_id}"}>Back to sessions</.back>
 
@@ -23,4 +42,5 @@
     session={@session}
     patch={~p"/sessions/#{@session}"}
   />
+
 </.modal>

@@ -4,14 +4,19 @@ defmodule MedixWeb.SessionLive.Show do
   alias Medix.GroupSession
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(%{"group_id" => group_id, "id" => id}, _session, socket) do
+    queues = GroupSession.show_queues(id)
+    IO.inspect queues
+    socket |> assign(:group_id, group_id) |> assign(:queues, queues)
     {:ok, socket}
   end
 
   @impl true
   def handle_params(%{"id" => id, "group_id" => group_id}, _, socket) do
+    queues = GroupSession.show_queues(id)
     {:noreply,
      socket
+     |> assign(:queues, queues)
      |> assign(:group_id, group_id)
      |> assign(:page_title, page_title(socket.assigns.live_action))
      |> assign(:session, GroupSession.get_session!(id))}

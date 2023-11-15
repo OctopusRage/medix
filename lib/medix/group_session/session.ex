@@ -5,6 +5,7 @@ defmodule Medix.GroupSession.Session do
   schema "sessions" do
     field :name, :string
     belongs_to :queue_group, Medix.Groups.QueueGroup
+    has_many :queues, Medix.GroupSession.Queue
 
     timestamps(type: :utc_datetime)
   end
