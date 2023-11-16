@@ -109,4 +109,13 @@ defmodule Medix.GroupSession do
   def show_queues(session_id) do
     Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
   end
+
+  def have_active_queue?(group_id) when is_binary(group_id), do: String.to_integer(group_id) |> have_active_queue?()
+  def have_active_queue?(group_id) do
+    Session |> where([s], s.queue_group_id == ^group_id and s.status == 1) |> Repo.exists?
+  end
+
+  def mark_as_done(session) do
+    session |> update_session(%{status: 2, resolved_at: DateTime.utc_now()})
+  end
 end

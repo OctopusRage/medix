@@ -1,25 +1,23 @@
 <.header>
-  Session <%= @session.id %>
-  <:subtitle>This is a session record from your database.</:subtitle>
+  Session <%= @session.name %>
+  <:subtitle>
+    <%= case @session.status do %>
+      <% 0 -> %> <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Waiting</span>
+      <% 1 -> %> <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Active</span>
+      <% 2 -> %> <span class="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">Done</span>
+    <% end %>
+
+  </:subtitle>
   <:actions>
-    <.link patch={~p"/sessions/#{@group_id}/edit/#{@session.id}"} phx-click={JS.push_focus()}>
-      <.button>Edit session</.button>
+    <.link :if={!@have_active_session} patch={~p"/sessions/#{@group_id}/edit/#{@session.id}"} phx-click={JS.push_focus()}>
+      <.button>Start session</.button>
+    </.link>
+    <.link :if={@session.status != 2} patch={~p"/sessions/#{@group_id}/mark_as_done/#{@session.id}"}>
+      <.button>Mark as done</.button>
     </.link>
   </:actions>
 </.header>
 
-<.list>
-  <:item title="Name"><%= @session.name %></:item>
-</.list>
-<div id="item">My Item</div>
-
-<button phx-click={JS.hide(to: "#item")}>
-  hide!
-</button>
-
-<button phx-click={JS.hide(to: "#item", transition: "fade-out-scale")}>
-  hide fancy!
-</button>
 
   <.table
     id="queues"
@@ -27,6 +25,7 @@
   >
     <:col :let={queue} label="Number"><%= queue.number %></:col>
     <:col :let={queue} label="Name"><%= queue.name %></:col>
+    <:col :let={queue} label="Status"><%= queue.status %></:col>
 
 
   </.table>

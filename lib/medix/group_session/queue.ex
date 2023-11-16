@@ -19,8 +19,7 @@ defmodule Medix.GroupSession.Queue do
   def changeset(queue, attrs) do
     queue
     |> cast(attrs, [:name, :number, :customer_id, :status, :notes, :session_id])
-    |> add_name_if_missing()
-    |> validate_required([:name, :session_id, :number])
+    |> validate_required([:name, :session_id, :number, :status])
   end
 
 

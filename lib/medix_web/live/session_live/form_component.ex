@@ -21,7 +21,12 @@ defmodule MedixWeb.SessionLive.FormComponent do
       >
         <.input field={@form[:name]} type="text" label="Name" />
         <.input field={@form[:queue_group_id]} value={@group_id} type="hidden" />
-
+        <.input
+          field={@form[:status]}
+          value={@group_id}
+          type="select"
+          options={["Start Now": 1, "Start for later": 0]}
+        />
 
         <:actions>
           <.button phx-disable-with="Saving...">Save Session</.button>
@@ -71,17 +76,24 @@ defmodule MedixWeb.SessionLive.FormComponent do
   end
 
   defp save_session(socket, :new, session_params) do
-    case GroupSession.create_session(session_params) do
-      {:ok, session} ->
-        notify_parent({:saved, session})
+    if !GroupSession.have_active_queue?(session_params["queue_group_id"]) do
+      case GroupSession.create_session(session_params) do
+        {:ok, session} ->
+          notify_parent({:saved, session})
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Session created successfully")
-         |> push_patch(to: socket.assigns.patch)}
+          {:noreply,
+           socket
+           |> put_flash(:info, "Session created successfully")
+           |> push_patch(to: socket.assigns.patch)}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply, assign_form(socket, changeset)}
+      end
+    else
+      {:noreply,
+       socket
+       |> put_flash(:error, "already have active session")
+       |> push_patch(to: socket.assigns.patch)}
     end
   end
 
