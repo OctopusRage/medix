@@ -10,6 +10,7 @@ defmodule Medix.GroupSession.Session do
     field :name, :string
     field :status, :integer
     field :started_at, :utc_datetime
+    field :resolved_at, :utc_datetime
     belongs_to :queue_group, Medix.Groups.QueueGroup
     has_many :queues, Medix.GroupSession.Queue
 
@@ -19,7 +20,7 @@ defmodule Medix.GroupSession.Session do
   @doc false
   def changeset(session, attrs) do
     session
-    |> cast(attrs, [:name, :queue_group_id, :status])
+    |> cast(attrs, [:name, :queue_group_id, :status, :resolved_at])
     |> add_name_if_missing()
     |> add_started_at_if_start()
     |> validate_required([:name, :queue_group_id, :status])

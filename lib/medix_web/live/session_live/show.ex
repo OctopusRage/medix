@@ -31,7 +31,7 @@ defmodule MedixWeb.SessionLive.Show do
     session = GroupSession.get_session!(id)
 
     socket
-    |> push_event("lapsed-time", %{id: "countdown", start_time: session.started_at, finished: session.status == 2})
+    |> push_event("lapsed-time", %{id: "countdown", start_time: session.started_at, finished_time: session.resolved_at})
     |> assign(:queues, queues)
     |> assign(:group_id, group_id)
     |> assign(:page_title, page_title(socket.assigns.live_action))
