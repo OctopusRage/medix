@@ -21,6 +21,7 @@ defmodule Medix.GroupSession.Session do
     session
     |> cast(attrs, [:name, :queue_group_id, :status])
     |> add_name_if_missing()
+    |> add_started_at_if_start()
     |> validate_required([:name, :queue_group_id, :status])
     |> validate_inclusion(:status, [0,1,2])
   end
@@ -29,6 +30,15 @@ defmodule Medix.GroupSession.Session do
   defp add_name_if_missing(changeset) do
     case get_field(changeset, :name) do
       nil -> put_change(changeset, :name, default_name())
+      _ -> changeset
+    end
+  end
+
+  defp add_started_at_if_start(changeset) do
+    case get_field(changeset, :status) do
+      1 ->
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
+        put_change(changeset, :started_at, now)
       _ -> changeset
     end
   end

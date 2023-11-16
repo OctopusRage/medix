@@ -1,18 +1,20 @@
 <.header>
   Session <%= @session.name %>
+  <div id="session_started_at" class="invisible"><%= @session.started_at %></div>
   <:subtitle>
     <%= case @session.status do %>
       <% 0 -> %> <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Waiting</span>
       <% 1 -> %> <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Active</span>
       <% 2 -> %> <span class="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">Done</span>
     <% end %>
+    <span id="countdown"></span>
 
   </:subtitle>
   <:actions>
-    <.link :if={!@have_active_session} patch={~p"/sessions/#{@group_id}/edit/#{@session.id}"} phx-click={JS.push_focus()}>
+    <.link :if={!@have_active_session && @session.status == 0} patch={~p"/sessions/#{@group_id}/edit/#{@session.id}"} phx-click={JS.push_focus()}>
       <.button>Start session</.button>
     </.link>
-    <.link :if={@session.status != 2} patch={~p"/sessions/#{@group_id}/mark_as_done/#{@session.id}"}>
+    <.link :if={@session.status != 2} patch={~p"/sessions/#{@group_id}/mark_as_done/#{@session.id}"} data-confirm="Are you sure?">
       <.button>Mark as done</.button>
     </.link>
   </:actions>

@@ -118,4 +118,8 @@ defmodule Medix.GroupSession do
   def mark_as_done(session) do
     session |> update_session(%{status: 2, resolved_at: DateTime.utc_now()})
   end
+
+  def start_session(session) do
+    session |> update_session(%{status: 1, started_at: DateTime.utc_now()})
+  end
 end

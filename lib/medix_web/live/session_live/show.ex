@@ -28,12 +28,14 @@ defmodule MedixWeb.SessionLive.Show do
         %{"group_id" => group_id, "id" => id} = _params
       ) do
     queues = GroupSession.show_queues(id)
+    session = GroupSession.get_session!(id)
 
     socket
+    |> push_event("lapsed-time", %{id: "countdown", start_time: session.started_at, finished: session.status == 2})
     |> assign(:queues, queues)
     |> assign(:group_id, group_id)
     |> assign(:page_title, page_title(socket.assigns.live_action))
-    |> assign(:session, GroupSession.get_session!(id))
+    |> assign(:session, session)
   end
 
   def apply_action(
@@ -42,16 +44,33 @@ defmodule MedixWeb.SessionLive.Show do
         %{"id" => id, "group_id" => group_id} = _params
       ) do
     case GroupSession.mark_as_done(socket.assigns.session) do
-      {:ok, session} ->
+      {:ok, _session} ->
         socket
         |> put_flash(:info, "mark as done")
         |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
-      {:error, changeset} ->
+      {:error, _changeset} ->
         socket
-          |> put_flash(:error, "something went wrong")
+          |> put_flash(:error, "Something went wrong")
           |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
     end
+  end
 
+  def apply_action(
+        socket,
+        :start_session,
+        %{"id" => id, "group_id" => group_id} = _params
+      ) do
+    case GroupSession.start_session(socket.assigns.session) do
+      {:ok, session} ->
+        socket
+        |> assign(:session, session)
+        |> put_flash(:info, "mark as done")
+        |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+      {:error, _changeset} ->
+        socket
+          |> put_flash(:error, "Something went wrong")
+          |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+    end
   end
 
   defp page_title(:show), do: "Show Session"

@@ -31,6 +31,35 @@ let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToke
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+window.addEventListener(`phx:lapsed-time`, (e) => {
+    let el = document.getElementById(e.detail.id)
+    let startedDate = new Date(e.detail.start_time).getTime()
+    if(el && startedDate) {
+        
+        let x = setInterval(function() {
+
+            // Get today's date and time
+            let now = new Date().getTime();
+  
+            // Find the distance between now and the count down date
+            let distance = (startedDate - now) * -1;
+            
+  
+            // Time calculations for days, hours, minutes and seconds
+            let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  
+            // Output the result in an element with id="countdown" 
+            // document.getElementById("countdown").innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+            el.innerHTML =  hours + "h " + minutes + "m " + seconds + "s ";
+  
+            // If the count down is over, write some text 
+        }, 1000);
+        
+    }
+  })
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()
