@@ -41,7 +41,7 @@ defmodule Medix.GroupSession do
       ** (Ecto.NoResultsError)
 
   """
-  def get_session!(id), do: Repo.get!(Session, id) |> Repo.preload(:queues)
+  def get_session!(id), do: Repo.get!(Session, id)
 
   @doc """
   Creates a session.
@@ -108,8 +108,8 @@ defmodule Medix.GroupSession do
     Session.changeset(session, attrs)
   end
 
-  def show_queues(session_id) do
-    Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
+  def list_queues(session_id) do
+    Queue |> where([q], q.session_id == ^session_id) |> order_by(asc: :number) |> Repo.all()
   end
 
   def have_active_queue?(group_id) when is_binary(group_id),
@@ -209,6 +209,45 @@ defmodule Medix.GroupSession do
       {:error, _, err_val, _changes} -> {:error, err_val}
     end
   end
+
+  def prev_queue(session) do
+    tx =
+      Multi.new()
+      |> Multi.run(:current_queue, fn repo, _ ->
+        current_queue =
+          Queue
+          |> where([q], q.session_id == ^session.id and q.status == 1)
+          |> limit(1)
+          |> repo.one()
+
+        if current_queue, do: {:ok, current_queue}, else: {:error, "no current queue"}
+      end)
+      |> Multi.run(:prev_queue, fn repo, multi ->
+        prev_queue =
+          Queue
+          |> where(
+            [q],
+            q.session_id == ^session.id and q.number == ^multi.current_queue.number - 1
+          )
+          |> limit(1)
+          |> repo.one()
+
+        if prev_queue, do: {:ok, prev_queue}, else: {:error, "Cant go to prev queue"}
+      end)
+      |> Multi.update(:update_c_queue, fn %{current_queue: q} ->
+        Queue.changeset(q, %{status: 0})
+      end)
+      |> Multi.update(:update_queue, fn %{prev_queue: q} ->
+        Queue.changeset(q, %{status: 1})
+      end)
+      |> Repo.transaction()
+
+    case tx do
+      {:ok, %{update_queue: queue}} -> {:ok, queue}
+      {:error, _, err_val, _changes} -> {:error, err_val}
+    end
+  end
+
 
   def update_queue(%Queue{} = queue, attrs) do
     queue

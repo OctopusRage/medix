@@ -7,7 +7,7 @@ defmodule MedixWeb.SessionLive.Show do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     session = GroupSession.get_session!(id)
-    queues = session.queues
+    queues = GroupSession.list_queues(id)
     have_active_session = GroupSession.have_active_queue?(session.queue_group_id)
 
     socket =
@@ -35,7 +35,7 @@ defmodule MedixWeb.SessionLive.Show do
         :show,
         %{"group_id" => group_id, "id" => id} = _params
       ) do
-    queues = GroupSession.show_queues(id)
+    queues = GroupSession.list_queues(id)
     session = GroupSession.get_session!(id)
 
     socket
@@ -111,9 +111,11 @@ defmodule MedixWeb.SessionLive.Show do
         %{"id" => id}
       ) do
     session = GroupSession.get_session!(id)
+    queues = GroupSession.list_queues(id)
+
     socket
     |> assign(:group_id, session.queue_group_id)
-    |> assign(:queues, session.queues)
+    |> assign(:queues, queues)
     |> assign(:session, session)
     |> assign(:page_title, "Add Queue")
   end
@@ -128,12 +130,34 @@ defmodule MedixWeb.SessionLive.Show do
       {:ok, _} -> socket |> put_flash(:info, "Change into next queue")
       {:error, err} -> socket |> put_flash(:error, err)
     end
+    queues = GroupSession.list_queues(id)
+
     socket
     |> assign(:group_id, session.queue_group_id)
-    |> assign(:queues, session.queues)
+    |> assign(:queues, queues)
     |> assign(:session, session)
     |> push_patch(to: "/sessions/#{session.queue_group_id}/show/#{id}")
   end
+
+  def apply_action(
+        socket,
+        :prev_queue,
+        %{"id" => id}
+      ) do
+    session = GroupSession.get_session!(id)
+    socket = case GroupSession.prev_queue(session) do
+      {:ok, _} -> socket |> put_flash(:info, "Change into previous queue")
+      {:error, err} -> socket |> put_flash(:error, err)
+    end
+    queues = GroupSession.list_queues(id)
+
+    socket
+    |> assign(:group_id, session.queue_group_id)
+    |> assign(:queues, queues)
+    |> assign(:session, session)
+    |> push_patch(to: "/sessions/#{session.queue_group_id}/show/#{id}")
+  end
+
 
   @impl true
   def handle_info({MedixWeb.SessionLive.FormComponentShow, {:saved, queue}}, socket) do

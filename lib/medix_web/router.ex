@@ -42,6 +42,7 @@ defmodule MedixWeb.Router do
 
     live "/sessions/:id/add_queue", SessionLive.Show, :add_queue
     live "/sessions/:id/next_queue", SessionLive.Show, :next_queue
+    live "/sessions/:id/prev_queue", SessionLive.Show, :prev_queue
 
     get "/", PageController, :home
     get "/the_song", PageController, :song
