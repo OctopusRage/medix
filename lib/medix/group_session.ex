@@ -1,4 +1,6 @@
 defmodule Medix.GroupSession do
+  alias Ecto.Multi
+
   @moduledoc """
   The GroupSession context.
   """
@@ -39,7 +41,7 @@ defmodule Medix.GroupSession do
       ** (Ecto.NoResultsError)
 
   """
-  def get_session!(id), do: Repo.get!(Session, id)
+  def get_session!(id), do: Repo.get!(Session, id) |> Repo.preload(:queues)
 
   @doc """
   Creates a session.
@@ -110,9 +112,11 @@ defmodule Medix.GroupSession do
     Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
   end
 
-  def have_active_queue?(group_id) when is_binary(group_id), do: String.to_integer(group_id) |> have_active_queue?()
+  def have_active_queue?(group_id) when is_binary(group_id),
+    do: String.to_integer(group_id) |> have_active_queue?()
+
   def have_active_queue?(group_id) do
-    Session |> where([s], s.queue_group_id == ^group_id and s.status == 1) |> Repo.exists?
+    Session |> where([s], s.queue_group_id == ^group_id and s.status == 1) |> Repo.exists?()
   end
 
   def mark_as_done(session) do
@@ -121,5 +125,71 @@ defmodule Medix.GroupSession do
 
   def start_session(session) do
     session |> update_session(%{status: 1, started_at: DateTime.utc_now()})
+  end
+
+  @doc """
+  Returns the list of queues.
+
+  ## Examples
+
+      iex> list_queues()
+      [%Queue{}, ...]
+
+  """
+  def list_queues do
+    Repo.all(Queue)
+  end
+
+  def list_queues(session_id) do
+    Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
+  end
+
+  def get_queue!(id), do: Repo.get!(Queue, id)
+
+  def add_queue(session, attrs \\ %{}) do
+    case Multi.new()
+         |> Multi.run(:last_queue, fn repo, _ ->
+           case Queue
+                |> where([q], q.session_id == ^session.id)
+                |> order_by(desc: :id)
+                |> limit(1)
+                |> repo.one() do
+             nil ->
+               number = 1
+               {:ok, attrs |> Map.merge(%{"number" => number})}
+
+             q ->
+               number = q.number + 1
+               {:ok, attrs |> Map.merge(%{"number" => number})}
+
+           end
+         end)
+         |> Multi.run(:queue, fn repo, %{last_queue: changes} ->
+           Queue.changeset(%Queue{}, changes) |> repo.insert()
+         end)
+         |> Repo.transaction() do
+      {:ok, %{queue: queue}} -> {:ok, queue}
+      {:error, _, err_val, _changes} -> {:error, err_val}
+    end
+  end
+
+  def update_queue(%Queue{} = queue, attrs) do
+    queue
+    |> Queue.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_queue(%Queue{} = queue) do
+    Repo.delete(queue)
+  end
+
+  def change_queue(queue, attrs \\ %{}) do
+    queue =
+      case queue do
+        %Queue{} -> queue
+        %{} -> %Queue{}
+      end
+
+    Queue.changeset(queue, attrs)
   end
 end

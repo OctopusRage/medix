@@ -15,14 +15,51 @@
 
   </:subtitle>
   <:actions>
-    <.link :if={!@have_active_session && @session.status == 0} patch={~p"/sessions/#{@group_id}/edit/#{@session.id}"} phx-click={JS.push_focus()}>
+    <.link :if={!@have_active_session && @session.status == 0} patch={~p"/sessions/#{@group_id}/start/#{@session.id}"} data-confirm="You are about to start a session?">
       <.button>Start session</.button>
     </.link>
     <.link :if={@session.status != 2} patch={~p"/sessions/#{@group_id}/mark_as_done/#{@session.id}"} data-confirm="Are you sure?">
       <.button>Mark as done</.button>
     </.link>
+    
   </:actions>
+  
 </.header>
+
+
+<div class="flex items-center">
+  <div class="inline-flex rounded-md shadow-sm" role="group">
+    <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-transparent border border-gray-900 rounded-s-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
+      <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5H1m0 0 4 4M1 5l4-4"/>
+      </svg>
+      Prev
+    </button>
+    <.link patch={~p"/sessions/#{@session.id}/add_queue"} phx-click={JS.push_focus()}>
+    <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-transparent border-t border-b border-gray-900 hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
+      <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12.25V1m0 11.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M4 19v-2.25m6-13.5V1m0 2.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M10 19V7.75m6 4.5V1m0 11.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM16 19v-2"/>
+      </svg>
+      Add
+    </button>
+    </.link>
+    <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-transparent border-t border-b border-l border-gray-900 hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
+      <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12.25V1m0 11.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M4 19v-2.25m6-13.5V1m0 2.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M10 19V7.75m6 4.5V1m0 11.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM16 19v-2"/>
+      </svg>
+      Call
+    </button>
+    
+    <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-transparent border border-gray-900 rounded-e-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
+      <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+      </svg>
+      Next
+    </button>
+  </div>
+</div>
+
+
 
 
   <.table
@@ -38,14 +75,20 @@
 
 <.back navigate={~p"/sessions/list/#{@group_id}"}>Back to sessions</.back>
 
-<.modal :if={@live_action == :edit} id="session-modal" show on_cancel={JS.patch(~p"/sessions/#{@session}")}>
+<.link patch={~p"/sessions/#{@session.id}/add_queue"} phx-click={JS.push_focus()}>
+  <.button>Edit post</.button>
+</.link>
+
+<.modal :if={@live_action == :add_queue} id="queue-modal" show on_cancel={JS.patch(~p"/sessions/#{@group_id}/show/#{@session.id}")}>
   <.live_component
-    module={MedixWeb.SessionLive.FormComponent}
-    id={@session.id}
+    module={MedixWeb.SessionLive.FormComponentShow}
+    id={:new}
     title={@page_title}
     action={@live_action}
     session={@session}
-    patch={~p"/sessions/#{@session}"}
+    queue={@queue}
+    patch={~p"/sessions/#{@session.id}/add_queue"}
   />
 
 </.modal>
+

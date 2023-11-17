@@ -37,9 +37,10 @@ defmodule MedixWeb.Router do
     live "/sessions/:group_id/edit/:id", SessionLive.Index, :edit
 
     live "/sessions/:group_id/show/:id", SessionLive.Show, :show
+    live "/sessions/:group_id/start/:id", SessionLive.Show, :start
     live "/sessions/:group_id/mark_as_done/:id", SessionLive.Show, :mark_as_done
 
-
+    live "/sessions/:id/add_queue", SessionLive.Show, :add_queue
 
     get "/", PageController, :home
   end

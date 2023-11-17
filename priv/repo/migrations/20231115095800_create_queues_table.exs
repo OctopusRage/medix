@@ -4,11 +4,11 @@ defmodule Medix.Repo.Migrations.CreateQueuesTable do
   def change do
     create table(:queues) do
       add :session_id, :bigint
-      add :number, :integer
+      add :number, :integer, nullable: false
 
       add :name, :string, nullable: true
-      add :customer_id, :bigint, nullable: true
-      add :status, :integer
+      add :customer_identity, :string, nullable: true
+      add :status, :integer, nullable: false
       add :notes, :text
 
       add :deleted_at, :utc_datetime, nullable: true

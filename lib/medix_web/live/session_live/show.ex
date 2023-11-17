@@ -4,15 +4,25 @@ defmodule MedixWeb.SessionLive.Show do
   alias Medix.GroupSession
 
   @impl true
-  def mount(%{"group_id" => group_id, "id" => id}, _session, socket) do
-    queues = GroupSession.show_queues(id)
-    have_active_session = GroupSession.have_active_queue?(group_id)
+  def mount(%{"id" => id}, _session, socket) do
+    session = GroupSession.get_session!(id)
+    queues = session.queues
+    have_active_session = GroupSession.have_active_queue?(session.queue_group_id)
 
     socket =
       socket
-      |> assign(:group_id, group_id)
+      |> assign(:group_id, session.queue_group_id)
+      |> assign(:queue, %{})
       |> assign(:queues, queues)
+      |> stream(:queues, queues)
       |> assign(:have_active_session, have_active_session)
+
+    {:ok, socket}
+  end
+
+  def mount(_params, _session, socket) do
+
+    IO.inspect socket
 
     {:ok, socket}
   end
@@ -31,7 +41,11 @@ defmodule MedixWeb.SessionLive.Show do
     session = GroupSession.get_session!(id)
 
     socket
-    |> push_event("lapsed-time", %{id: "countdown", start_time: session.started_at, finished_time: session.resolved_at})
+    |> push_event("lapsed-time", %{
+      id: "countdown",
+      start_time: session.started_at,
+      finished_time: session.resolved_at
+    })
     |> assign(:queues, queues)
     |> assign(:group_id, group_id)
     |> assign(:page_title, page_title(socket.assigns.live_action))
@@ -48,10 +62,29 @@ defmodule MedixWeb.SessionLive.Show do
         socket
         |> put_flash(:info, "mark as done")
         |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+
       {:error, _changeset} ->
         socket
-          |> put_flash(:error, "Something went wrong")
-          |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+        |> put_flash(:error, "Something went wrong")
+        |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+    end
+  end
+
+  def apply_action(
+        socket,
+        :start,
+        %{"id" => id, "group_id" => group_id} = _params
+      ) do
+    case GroupSession.start_session(socket.assigns.session) do
+      {:ok, _session} ->
+        socket
+        |> put_flash(:info, "mark as done")
+        |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+
+      {:error, _changeset} ->
+        socket
+        |> put_flash(:error, "Something went wrong")
+        |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
     end
   end
 
@@ -66,14 +99,35 @@ defmodule MedixWeb.SessionLive.Show do
         |> assign(:session, session)
         |> put_flash(:info, "mark as done")
         |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+
       {:error, _changeset} ->
         socket
-          |> put_flash(:error, "Something went wrong")
-          |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
+        |> put_flash(:error, "Something went wrong")
+        |> push_patch(to: "/sessions/#{group_id}/show/#{id}", replace: true)
     end
   end
+
+  def apply_action(
+        socket,
+        :add_queue,
+        %{"id" => id}
+      ) do
+    session = GroupSession.get_session!(id)
+    socket
+    |> assign(:group_id, session.queue_group_id)
+    |> assign(:queues, session.queues)
+    |> assign(:session, session)
+    |> assign(:page_title, "Add Queue")
+  end
+
+  @impl true
+  def handle_info({MedixWeb.SessionLive.FormComponentShow, {:saved, queue}}, socket) do
+    {:noreply, stream_insert(socket, :queues, queue)}
+  end
+
 
   defp page_title(:show), do: "Show Session"
   defp page_title(:edit), do: "Edit Session"
   defp page_title(:mark_as_done), do: "Show Session"
+  defp page_title(:add_queue), do: "Show Session"
 end

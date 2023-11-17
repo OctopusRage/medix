@@ -2,11 +2,14 @@ defmodule Medix.GroupSession.Queue do
   use Ecto.Schema
   import Ecto.Changeset
 
+  # status 0 waiting
+  # status 1 served
+  # status 2 cancelled
   schema "queues" do
     field :number, :integer
     field :name, :string
-    field :customer_id, :integer
-    field :status, :integer
+    field :customer_identity, :string
+    field :status, :integer, default: 0
     field :notes, :integer
 
     belongs_to :session, Medix.GroupSession.Session
@@ -18,19 +21,8 @@ defmodule Medix.GroupSession.Queue do
   @doc false
   def changeset(queue, attrs) do
     queue
-    |> cast(attrs, [:name, :number, :customer_id, :status, :notes, :session_id])
-    |> validate_required([:name, :session_id, :number, :status])
+    |> cast(attrs, [:name, :number, :customer_identity, :status, :notes, :session_id])
+    |> validate_required([:name, :session_id])
   end
 
-
-  defp add_name_if_missing(changeset) do
-    case get_field(changeset, :name) do
-      nil -> put_change(changeset, :name, default_name())
-      _ -> changeset
-    end
-  end
-
-  defp default_name() do
-    DateTime.utc_now()
-  end
 end
