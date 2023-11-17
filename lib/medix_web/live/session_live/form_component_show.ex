@@ -61,7 +61,6 @@ defmodule MedixWeb.SessionLive.FormComponentShow do
     case GroupSession.update_queue(socket.assigns.queue, queue_params) do
       {:ok, queue} ->
         notify_parent({:saved, queue})
-        IO.inspect(socket.assigns.patch)
         session = socket.assigns.session
         {:noreply,
          socket
@@ -77,7 +76,6 @@ defmodule MedixWeb.SessionLive.FormComponentShow do
     case GroupSession.add_queue(socket.assigns.session, queue_params) do
       {:ok, queue} ->
         notify_parent({:saved, queue})
-        IO.inspect(socket.assigns.patch)
         session = socket.assigns.session
         {:noreply,
          socket

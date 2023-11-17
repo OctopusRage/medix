@@ -161,7 +161,6 @@ defmodule Medix.GroupSession do
              q ->
                number = q.number + 1
                {:ok, attrs |> Map.merge(%{"number" => number})}
-
            end
          end)
          |> Multi.run(:queue, fn repo, %{last_queue: changes} ->
@@ -169,6 +168,44 @@ defmodule Medix.GroupSession do
          end)
          |> Repo.transaction() do
       {:ok, %{queue: queue}} -> {:ok, queue}
+      {:error, _, err_val, _changes} -> {:error, err_val}
+    end
+  end
+
+  def next_queue(session) do
+    tx =
+      Multi.new()
+      |> Multi.run(:current_queue, fn repo, _ ->
+        current_queue =
+          Queue
+          |> where([q], q.session_id == ^session.id and q.status == 1)
+          |> limit(1)
+          |> repo.one()
+
+        if current_queue, do: {:ok, current_queue}, else: {:error, "no current queue"}
+      end)
+      |> Multi.run(:next_queue, fn repo, multi ->
+        next_queue =
+          Queue
+          |> where(
+            [q],
+            q.session_id == ^session.id and q.number == ^multi.current_queue.number + 1
+          )
+          |> limit(1)
+          |> repo.one()
+
+        if next_queue, do: {:ok, next_queue}, else: {:error, "Cant go to next queue"}
+      end)
+      |> Multi.update(:update_c_queue, fn %{current_queue: q} ->
+        Queue.changeset(q, %{status: 0})
+      end)
+      |> Multi.update(:update_queue, fn %{next_queue: q} ->
+        Queue.changeset(q, %{status: 1})
+      end)
+      |> Repo.transaction()
+
+    case tx do
+      {:ok, %{update_queue: queue}} -> {:ok, queue}
       {:error, _, err_val, _changes} -> {:error, err_val}
     end
   end

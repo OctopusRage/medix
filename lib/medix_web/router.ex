@@ -41,8 +41,10 @@ defmodule MedixWeb.Router do
     live "/sessions/:group_id/mark_as_done/:id", SessionLive.Show, :mark_as_done
 
     live "/sessions/:id/add_queue", SessionLive.Show, :add_queue
+    live "/sessions/:id/next_queue", SessionLive.Show, :next_queue
 
     get "/", PageController, :home
+    get "/the_song", PageController, :song
   end
 
   # Other scopes may use custom stacks.

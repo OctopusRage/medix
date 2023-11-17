@@ -2,6 +2,7 @@ defmodule MedixWeb.SessionLive.Show do
   use MedixWeb, :live_view
 
   alias Medix.GroupSession
+  import MedixWeb.SessionLive.TableComponent
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -21,9 +22,6 @@ defmodule MedixWeb.SessionLive.Show do
   end
 
   def mount(_params, _session, socket) do
-
-    IO.inspect socket
-
     {:ok, socket}
   end
 
@@ -120,6 +118,23 @@ defmodule MedixWeb.SessionLive.Show do
     |> assign(:page_title, "Add Queue")
   end
 
+  def apply_action(
+        socket,
+        :next_queue,
+        %{"id" => id}
+      ) do
+    session = GroupSession.get_session!(id)
+    socket = case GroupSession.next_queue(session) do
+      {:ok, _} -> socket |> put_flash(:info, "Change into next queue")
+      {:error, err} -> socket |> put_flash(:error, err)
+    end
+    socket
+    |> assign(:group_id, session.queue_group_id)
+    |> assign(:queues, session.queues)
+    |> assign(:session, session)
+    |> push_patch(to: "/sessions/#{session.queue_group_id}/show/#{id}")
+  end
+
   @impl true
   def handle_info({MedixWeb.SessionLive.FormComponentShow, {:saved, queue}}, socket) do
     {:noreply, stream_insert(socket, :queues, queue)}
@@ -130,4 +145,6 @@ defmodule MedixWeb.SessionLive.Show do
   defp page_title(:edit), do: "Edit Session"
   defp page_title(:mark_as_done), do: "Show Session"
   defp page_title(:add_queue), do: "Show Session"
+
+
 end

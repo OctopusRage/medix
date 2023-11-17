@@ -20,6 +20,7 @@ defmodule Medix.GroupSession.Queue do
 
   @doc false
   def changeset(queue, attrs) do
+    IO.inspect queue
     queue
     |> cast(attrs, [:name, :number, :customer_identity, :status, :notes, :session_id])
     |> validate_required([:name, :session_id])
