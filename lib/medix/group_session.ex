@@ -140,10 +140,6 @@ defmodule Medix.GroupSession do
     Repo.all(Queue)
   end
 
-  def list_queues(session_id) do
-    Queue |> where([q], q.session_id == ^session_id) |> Repo.all()
-  end
-
   def get_queue!(id), do: Repo.get!(Queue, id)
 
   def add_queue(session, attrs \\ %{}) do
