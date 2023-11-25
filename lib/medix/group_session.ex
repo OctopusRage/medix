@@ -125,7 +125,7 @@ defmodule Medix.GroupSession do
 
   def start_session(%{status: 0} = session) do
     queue = Queue |> where([q], q.session_id == ^session.id and q.number == 1) |> Repo.one()
-    queue = if queue, do: queue |> Queue.changeset(%{status: 1}) |> Repo.update!()
+    if queue, do: queue |> Queue.changeset(%{status: 1}) |> Repo.update!()
     session |> update_session(%{status: 1, started_at: DateTime.utc_now()})
   end
 

@@ -1,5 +1,4 @@
 defmodule MedixWeb.Router do
-  alias MedixWeb.BoardLive
   use MedixWeb, :router
 
   pipeline :browser do
@@ -17,8 +16,9 @@ defmodule MedixWeb.Router do
 
   scope "/", MedixWeb do
     pipe_through :browser
+    # live "/board", BoardLive.Index, :index
 
-    live_session :board, root_layout: {MedixWeb.BoardLayouts, :app} do
+    live_session :board, root_layout: {MedixWeb.BoardLayouts, :root} do
       live "/board", BoardLive.Index, :index
     end
 
