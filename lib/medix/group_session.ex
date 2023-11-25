@@ -123,7 +123,9 @@ defmodule Medix.GroupSession do
     session |> update_session(%{status: 2, resolved_at: DateTime.utc_now()})
   end
 
-  def start_session(session) do
+  def start_session(%{status: 0} = session) do
+    queue = Queue |> where([q], q.session_id == ^session.id and q.number == 1) |> Repo.one()
+    queue = if queue, do: queue |> Queue.changeset(%{status: 1}) |> Repo.update!()
     session |> update_session(%{status: 1, started_at: DateTime.utc_now()})
   end
 
@@ -151,8 +153,9 @@ defmodule Medix.GroupSession do
                 |> limit(1)
                 |> repo.one() do
              nil ->
+               status = if session.status == 1, do: 1, else: 0
                number = 1
-               {:ok, attrs |> Map.merge(%{"number" => number})}
+               {:ok, attrs |> Map.merge(%{"number" => number, "status" => status})}
 
              q ->
                number = q.number + 1
@@ -193,7 +196,7 @@ defmodule Medix.GroupSession do
         if next_queue, do: {:ok, next_queue}, else: {:error, "Cant go to next queue"}
       end)
       |> Multi.update(:update_c_queue, fn %{current_queue: q} ->
-        Queue.changeset(q, %{status: 0})
+        Queue.changeset(q, %{status: 2})
       end)
       |> Multi.update(:update_queue, fn %{next_queue: q} ->
         Queue.changeset(q, %{status: 1})
@@ -243,7 +246,6 @@ defmodule Medix.GroupSession do
       {:error, _, err_val, _changes} -> {:error, err_val}
     end
   end
-
 
   def update_queue(%Queue{} = queue, attrs) do
     queue
